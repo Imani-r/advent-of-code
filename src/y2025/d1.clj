@@ -13,16 +13,37 @@
    R14
    L82")
 
-; 1. parse the input
+(def input
+  (slurp "data/y2025/d1.txt"))
 
-(->> (re-seq #"\w+" example)
-     (map (fn [s]
-            
-             (parse-long (str/replace s #"[LR]" {"L" "-", "R" "+"})))))
+(defn parse [input]
+  (->> (re-seq #"\w+" input)
+       (map (fn [s]
+              (parse-long (str/replace s #"[LR]" {"L" "-", "R" "+"}))))))
 
 (comment
-  ({:a 1, :b 2} :a)
-  (:a {:a 1, :b 2}))
+  ; Part 1
+  (reduce
+   (fn [[pos zeros-count] n] 
+     (let [new-pos (mod (+ pos n) 100)]
+       [new-pos (if (zero? new-pos)
+                  (inc zeros-count)
+                  zeros-count)]))
+   [50, 0]
+   (parse input)
+   )
 
-; 2. solve the problem
+  ; Part 2  
+  (reduce
+   (fn [[pos tot] n]
+     (let [new-pos (mod (+ pos n) 100)
+           clicks (count
+                    (filter #(zero? (mod % 100)) 
+                           (range pos (+ pos n) (if (neg? n) -1 1))))]
+       [new-pos (+ tot clicks)]))
+   [50, 0]
+   (parse input)) 
+  
+  )
+
 
