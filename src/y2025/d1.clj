@@ -16,34 +16,35 @@
 (def input
   (slurp "data/y2025/d1.txt"))
 
+;; Parse input string into list of signed numbers
+;; Converts "L68" -> -68 and "R48" -> +48
 (defn parse [input]
-  (->> (re-seq #"\w+" input)
+  (->> (re-seq #"\w+" input)                                      ; Extract all words (L68, R30, etc.)
        (map (fn [s]
-              (parse-long (str/replace s #"[LR]" {"L" "-", "R" "+"}))))))
+              (parse-long (str/replace s #"[LR]" {"L" "-", "R" "+"})))))) ; Replace L with -, R with +, then parse
 
 (comment
   ; Part 1
+  ;; Track position on circular track (0-99) and count how many times we hit position 0
   (reduce
-   (fn [[pos zeros-count] n] 
-     (let [new-pos (mod (+ pos n) 100)]
-       [new-pos (if (zero? new-pos)
-                  (inc zeros-count)
-                  zeros-count)]))
-   [50, 0]
-   (parse input)
-   )
+   (fn [[pos zeros-count] n]                ; Accumulator: [current-position, count-of-zeros]
+     (let [new-pos (mod (+ pos n) 100)]     ; Move by n, wrap around at 100
+       [new-pos (if (zero? new-pos)         ; If we landed on 0
+                  (inc zeros-count)         ; Increment the zero counter
+                  zeros-count)]))           ; Otherwise keep count the same
+   [50, 0]                                  ; Start at position 50, with 0 zeros counted
+   (parse input))
 
   ; Part 2  
+  ;; Track position and count total number of times we cross position 0 during moves
   (reduce
-   (fn [[pos tot] n]
-     (let [new-pos (mod (+ pos n) 100)
-           clicks (count
-                    (filter #(zero? (mod % 100)) 
-                           (range pos (+ pos n) (if (neg? n) -1 1))))]
-       [new-pos (+ tot clicks)]))
-   [50, 0]
+   (fn [[pos tot] n]                        ; Accumulator: [current-position, total-crossings]
+     (let [new-pos (mod (+ pos n) 100)      ; Calculate new position after move
+           clicks (count                    ; Count crossings during this move
+                    (filter #(zero? (mod % 100))           ; Check which positions are divisible by 100
+                           (range pos (+ pos n) (if (neg? n) -1 1))))]  ; Generate range of positions moved through
+       [new-pos (+ tot clicks)]))           ; Update position and add crossings to total
+   [50, 0]                                  ; Start at position 50, with 0 crossings
    (parse input)) 
   
   )
-
-
