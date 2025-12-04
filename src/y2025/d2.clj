@@ -11,10 +11,10 @@
 (defn my-range [start end]
   (range (parse-long start) (+ (parse-long end) 1)))
 
-; Part 1
+;; Part 1
 
-;; Checks if a number's digits repeat halfway through
-;; e.g., 1111 -> "11" = "11", 38593859 -> "3859" = "3859"
+; Checks if a number's digits repeat halfway through
+; e.g., 1111 -> "11" = "11", 38593859 -> "3859" = "3859"
 (defn repeats-twice? [n]
   (let [s (str n)                      ; Convert number to string
         len (count s)                  ; Get total length
@@ -23,11 +23,45 @@
         second-half (subs s half)]     ; Extract second half
     (= first-half second-half)))       ; Check if halves match
 
-(->> (str/split input #",")                              ; Split by commas into ranges
-     (map (fn [s]                                        ; For each range string
-            (apply my-range (str/split s #"-"))))        ; Split on "-" and create range
-     flatten                                             ; Combine all ranges into single list
+(->> (str/split input #",")                             ; Split by commas into ranges
+     (map (fn [s]                                       ; For each range string
+            (apply my-range (str/split s #"-"))))       ; Split on "-" and create range
+     flatten                                            ; Combine all ranges into single list
      (filter (fn [n] (even? (count (str n)))))          ; Keep only numbers with even digit count
      (filter repeats-twice?)                            ; Keep only numbers where halves repeat
      (apply +))                                         ; Sum all remaining numbers
+
+
+;; Part 2
+
+;; Find factors of a given number 
+(defn factors [n]
+  (loop [x       2 
+         factors [1]]
+    (if (< (/ n 2) x)
+      factors
+      (recur (inc x)
+             (if (zero? (mod n x))
+               (conj factors x)
+               factors)))
+    ))
+
+
+(defn repeats? [n]
+  (let [s       (str n)                                 ; Convert number to string
+        len     (count s)                               ; Get total length
+        ]
+    (when (< 1 len)                                     ; Ignore single-digit numbers
+      (let [factors (factors len)
+        parts   (for [f factors]
+                  (partition f s))]                    ; For every factor, split up the number into parts, based on the 
+      (some #(apply = %) parts)))))
+
+(->> (str/split input #",")                             ; Split by commas into ranges
+     (map (fn [s]                                       ; For each range string
+            (apply my-range (str/split s #"-"))))       ; Split on "-" and create range
+     flatten                                            ; Combine all ranges into single list 
+     (filter repeats?)                                  ; Keep only IDs with a sequence of digits that repeat
+     (apply +))                                         ; Sum all remaining numbers
+
 
