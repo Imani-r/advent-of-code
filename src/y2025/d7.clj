@@ -32,37 +32,71 @@
     (update ,,, :a inc)
     (update ,,, :b dec))
 
-(let [[first-row & rest-rows] (parse-input input)]
-  (reduce
-   (fn [m row]
-     #_(prn (mapv (fn [[i ch]]
-                  (if (and (contains? (:beam-pos m) i)
-                           (not= \^ ch))
-                    \|
-                    ch))
-                (map-indexed vector row)))
-     (reduce
-      (fn [m pos] 
-        (let [ch (get row pos)]
+; Part 1
+(let [[first-row & rest-rows] (parse-input example)]
+      (reduce
+       (fn [m row]
+         #_(prn (mapv (fn [[i ch]]
+                        (if (and (contains? (:beam-pos m) i)
+                                 (not= \^ ch))
+                          \|
+                          ch))
+                      (map-indexed vector row)))
+         (reduce
+          (fn [m pos]
+            (let [ch (get row pos)]
           ; What is at pos?
-          (-> m
-              (update :beam-pos #(case ch
+              (-> m
+                  (update :beam-pos #(case ch
                                    ; If dot, keep position in beam-pos set (i.e. do nothing)
-                                   \. % 
+                                       \. %
                                    ; If splitter, remove pos and add two new beams either side
-                                   \^ (-> %
-                                          (disj pos)
-                                          (conj (dec pos) (inc pos)))))
+                                       \^ (-> %
+                                              (disj pos)
+                                              (conj (dec pos) (inc pos)))))
               ; If splitter at current pos, inc splitter-count
-              (update :splitter-count #(if (= \^ ch) (inc %) %)))) 
-        )
-      m
-      (:beam-pos m))
-     )
-   {:beam-pos       #{(get (set/map-invert first-row) \S)}
-    :splitter-count 0}
-   rest-rows))
+                  (update :splitter-count #(if (= \^ ch) (inc %) %)))))
+          m
+          (:beam-pos m)))
+       {:beam-pos       #{(get (set/map-invert first-row) \S)}
+        :splitter-count 0} 
+       rest-rows))
 
+; Part 2
+(->> (let [[first-row & rest-rows] (parse-input example)]
+       (reduce
+        (fn [m row]
+          #_(prn (mapv (fn [[i ch]]
+                         (if (and (contains? (:beam-pos m) i)
+                                  (not= \^ ch))
+                           \|
+                           ch))
+                       (map-indexed vector row)))
+          (reduce
+           (fn [m [pos num-paths]]
+             (let [ch (get row pos)]
+          ; What is at pos?
+               (-> m
+                   (update :beam-pos #(case ch
+                                   ; If dot, keep position in beam-pos set (i.e. do nothing)
+                                        \. %
+                                   ; If splitter, stop tracking num of ways to get to pos,
+                                   ;   carry over num of ways to positions of two new beams either side -- adding where there is overlap
+                                        \^ (-> %
+                                               (dissoc pos)
+                                               (->> (merge-with + {(dec pos) num-paths
+                                                                   (inc pos) num-paths})))))
+              ; If splitter at current pos, inc splitter-count
+                   (update :splitter-count #(if (= \^ ch) (inc %) %)))))
+           m
+           (:beam-pos m)))
+        {:beam-pos       {(get (set/map-invert first-row) \S) 1}
+         :splitter-count 0} 
+        rest-rows))
+     
+     (:beam-pos)
+     (vals)
+     (apply +))
 
 (parse-input example)
 
